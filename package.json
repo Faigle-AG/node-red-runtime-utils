@@ -1,6 +1,6 @@
 {
   "name": "@faigle/node-red-runtime-utils",
-  "version": "0.0.1",
+  "version": "0.1.1",
   "description": "Helpers for building Node-RED nodes",
   "main": "index.js",
   "private": false,
