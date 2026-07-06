@@ -31,6 +31,12 @@ describe('status utils', function () {
         assert.deepEqual(lastStatus, { fill: 'yellow', shape: 'dot', text: 'warn' });
     });
 
+    it('sets info status', function () {
+        const status = createStatus(node);
+        status.info('info');
+        assert.deepEqual(lastStatus, { fill: 'grey', shape: 'dot', text: 'info' });
+    });
+
     it('sets waiting status', function () {
         const status = createStatus(node);
         status.waiting('wait');
@@ -40,7 +46,7 @@ describe('status utils', function () {
     it('sets idle status', function () {
         const status = createStatus(node);
         status.idle();
-        assert.deepEqual(lastStatus, { fill: 'grey', shape: 'dot', text: 'idle' });
+        assert.deepEqual(lastStatus, { fill: 'grey', shape: 'ring', text: 'idle' });
     });
 
     it('sets disabled status', function () {

@@ -53,6 +53,10 @@ function createStatus(node) {
             show('yellow', 'dot', text || 'warning');
         },
 
+        info(text) {
+            show('grey', 'dot', text || 'info');
+        },
+
         processing(text) {
             show('blue', 'ring', text || 'processing');
         },
@@ -62,7 +66,7 @@ function createStatus(node) {
         },
 
         idle(text) {
-            show('grey', 'dot', text || 'idle');
+            show('grey', 'ring', text || 'idle');
         },
 
         disabled(text) {
