@@ -1,16 +1,12 @@
 {
   "name": "@faigle/node-red-runtime-utils",
-  "version": "0.0.0",
+  "version": "0.0.1",
   "description": "Helpers for building Node-RED nodes",
   "main": "index.js",
-
   "private": false,
   "license": "MIT",
-
-
   "files": [
-    "index.js",
-    "lib"
+    "src"
   ],
   "peerDependencies": {
     "node-red": ">=3"

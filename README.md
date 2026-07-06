@@ -20,11 +20,8 @@ Import the helpers inside your Node-RED node runtime file:
 
 ```js
 module.exports = function (RED) {
-    const {
-        getTypedProperty,
-        setTypedProperty,
-        createStatus,
-    } = require('@faigle/node-red-runtime-utils')(RED);
+    const { getTypedProperty, setTypedProperty, createStatus } =
+        require('@faigle/node-red-runtime-utils')(RED);
 
     function MyNode(config) {
         RED.nodes.createNode(this, config);
@@ -40,7 +37,7 @@ module.exports = function (RED) {
                     config.source,
                     config.sourceType || 'str',
                     node,
-                    msg
+                    msg,
                 );
 
                 await setTypedProperty(
@@ -48,7 +45,7 @@ module.exports = function (RED) {
                     msg,
                     config.target || 'payload',
                     config.targetType || 'msg',
-                    value
+                    value,
                 );
 
                 status.succeeded('done');
@@ -75,12 +72,7 @@ module.exports = function (RED) {
 Reads a value from a Node-RED typed input configuration.
 
 ```js
-const value = await getTypedProperty(
-    config.source,
-    config.sourceType,
-    node,
-    msg
-);
+const value = await getTypedProperty(config.source, config.sourceType, node, msg);
 ```
 
 Example editor setup:
@@ -115,13 +107,7 @@ Supported target types:
 - `global`
 
 ```js
-await setTypedProperty(
-    node,
-    msg,
-    config.target || 'payload',
-    config.targetType || 'msg',
-    value
-);
+await setTypedProperty(node, msg, config.target || 'payload', config.targetType || 'msg', value);
 ```
 
 Example editor setup:
@@ -179,16 +165,16 @@ status.clear();
 
 Default status behavior:
 
-| Method | Status |
-|---|---|
-| `processing()` | blue ring |
-| `succeeded()` | green dot, clears after 10 seconds |
-| `failed()` | red dot |
-| `warning()` | yellow dot |
-| `waiting()` | grey ring |
-| `idle()` | grey dot |
-| `disabled()` | grey dot |
-| `paused()` | yellow ring |
+| Method         | Status                             |
+| -------------- | ---------------------------------- |
+| `processing()` | blue ring                          |
+| `succeeded()`  | green dot, clears after 10 seconds |
+| `failed()`     | red dot                            |
+| `warning()`    | yellow dot                         |
+| `waiting()`    | grey ring                          |
+| `idle()`       | grey dot                           |
+| `disabled()`   | grey dot                           |
+| `paused()`     | yellow ring                        |
 
 #### Success with custom duration
 
