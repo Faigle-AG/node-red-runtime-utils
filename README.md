@@ -1,42 +1,207 @@
-# @faigle/node-red-contrib-_directory_
+# @faigle/node-red-runtime-utils
 
-This repository is a GitHub template for creating custom Node-RED nodes. It includes a boilerplate node (`_template_`), a testing setup using Mocha, and automated code quality tools.
+Runtime helpers for building Node-RED nodes.
 
-## Creating Real Nodes
+This package provides small, reusable utilities for common Node-RED node tasks:
 
-To build a functional node from this template, replace the placeholder data:
+- reading typed input properties
+- writing to configurable output targets
+- showing consistent node status states
 
-1. **Create a new repository:** _Use this template_ on GitHub to create a new repository.
-2. **Clone repository:** Clone the repository locally
-3. **Rename Files:** Change `_template_.js`, `_template_.html`, and `test/_template_spec.js` to match your node's intended name.
-4. **Update `package.json`:** Modify the `"name"`, `"description"`, and map your new file in the `"node-red": { "nodes": { ... } }` object.
-5. **Update Source Code:** Search and replace all instances of `_template_` and `ExampleTemplateNode` in the `.js`, `.html`, and `_spec.js` files with your actual node type and function names.
-6. **Change Versioon:** change the version in `package.json`
+## Installation
 
-## Development Tools
+```bash
+npm install @faigle/node-red-runtime-utils
+```
 
-### Linter (ESLint)
+## Usage
 
-The project uses ESLint v10 with a flat configuration (`eslint.config.mjs`). Plugins are included to lint JavaScript, HTML, JSON, and Markdown files.
+Import the helpers inside your Node-RED node runtime file:
 
-- Run the linter: \
-  `npm run lint`
+```js
+module.exports = function (RED) {
+    const {
+        getTypedProperty,
+        setTypedProperty,
+        createStatus,
+    } = require('@faigle/node-red-runtime-utils')(RED);
 
-### Formatter (Prettier)
+    function MyNode(config) {
+        RED.nodes.createNode(this, config);
 
-Prettier is configured to enforce consistent styling across JavaScript, HTML, and Markdown files.
+        const node = this;
+        const status = createStatus(node);
 
-- Run the formatter: `npm run format`
+        node.on('input', async function (msg, send, done) {
+            try {
+                status.processing('working');
 
-#### Markdown Block Exception **(`<!-- prettier-ignore -->`)**
+                const value = await getTypedProperty(
+                    config.source,
+                    config.sourceType || 'str',
+                    node,
+                    msg
+                );
 
-In the `_template_.html` file, you will find an HTML comment `<!-- prettier-ignore -->` immediately preceding the `<script type="text/markdown" data-help-name="_template_">` block. Node-RED requires strict formatting to correctly render this Markdown in the editor's help sidebar. Prettier would otherwise reformat the text (e.g., altering indentation or line breaks) and break Node-RED's internal parser.
+                await setTypedProperty(
+                    node,
+                    msg,
+                    config.target || 'payload',
+                    config.targetType || 'msg',
+                    value
+                );
 
-### Git Hooks (Husky)
+                status.succeeded('done');
 
-Husky manages Git hooks to enforce code quality before commits. The included `pre-commit` script automatically performs the following actions:
+                send(msg);
+                if (done) done();
+            } catch (err) {
+                status.failed(err.message || 'failed');
 
-1. Runs the test suite (`npm test`).
-2. Triggers `lint-staged` to format and lint the files you are attempting to commit.
-3. Automatically increments the patch version in your package (`npm version patch --no-git-tag-version`).
-4. Stages the updated `package.json` and `package-lock.json` files to be included in the commit.
+                if (done) done(err);
+                else node.error(err, msg);
+            }
+        });
+    }
+
+    RED.nodes.registerType('my-node', MyNode);
+};
+```
+
+## Helpers
+
+### `getTypedProperty(value, type, node, msg)`
+
+Reads a value from a Node-RED typed input configuration.
+
+```js
+const value = await getTypedProperty(
+    config.source,
+    config.sourceType,
+    node,
+    msg
+);
+```
+
+Example editor setup:
+
+```js
+$('#node-input-source').typedInput({
+    default: 'str',
+    types: ['msg', 'flow', 'global', 'str', 'jsonata', 'env'],
+    typeField: $('#node-input-sourceType'),
+});
+```
+
+Example defaults:
+
+```js
+defaults: {
+    source: { value: '' },
+    sourceType: { value: 'str' },
+}
+```
+
+---
+
+### `setTypedProperty(node, msg, target, targetType, value)`
+
+Writes a value to a configurable output target.
+
+Supported target types:
+
+- `msg`
+- `flow`
+- `global`
+
+```js
+await setTypedProperty(
+    node,
+    msg,
+    config.target || 'payload',
+    config.targetType || 'msg',
+    value
+);
+```
+
+Example editor setup:
+
+```js
+$('#node-input-target').typedInput({
+    default: 'msg',
+    types: ['msg', 'flow', 'global'],
+    typeField: $('#node-input-targetType'),
+});
+```
+
+Example defaults:
+
+```js
+defaults: {
+    target: { value: 'payload' },
+    targetType: { value: 'msg' },
+}
+```
+
+Example targets:
+
+```txt
+payload
+file.data
+result.value
+```
+
+For `msg` targets, do not include the `msg.` prefix.
+
+---
+
+### `createStatus(node)`
+
+Creates a small status helper for a Node-RED node instance.
+
+```js
+const status = createStatus(node);
+```
+
+Available methods:
+
+```js
+status.processing('working');
+status.succeeded('done');
+status.failed('failed');
+status.warning('warning');
+status.waiting('waiting');
+status.idle('idle');
+status.disabled('disabled');
+status.paused('paused');
+status.clear();
+```
+
+Default status behavior:
+
+| Method | Status |
+|---|---|
+| `processing()` | blue ring |
+| `succeeded()` | green dot, clears after 10 seconds |
+| `failed()` | red dot |
+| `warning()` | yellow dot |
+| `waiting()` | grey ring |
+| `idle()` | grey dot |
+| `disabled()` | grey dot |
+| `paused()` | yellow ring |
+
+#### Success with custom duration
+
+```js
+status.succeeded('done', {
+    durationMs: 3000,
+});
+```
+
+#### Success followed by another status
+
+```js
+status.succeeded('done', {
+    next: () => status.waiting('waiting for input'),
+});
+```
