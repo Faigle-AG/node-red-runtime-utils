@@ -2,11 +2,13 @@
 
 Runtime helpers for building Node-RED nodes.
 
-This package provides small, reusable utilities for common Node-RED node tasks:
+This package extends a Node-RED node instance with small convenience methods for common runtime tasks:
 
 - reading typed input properties
 - writing to configurable output targets
 - showing consistent node status states
+
+It is intended to be used by Node-RED node packages, not installed as a Node-RED palette node itself.
 
 ## Installation
 
@@ -16,44 +18,41 @@ npm install @faigle/node-red-runtime-utils
 
 ## Usage
 
-Import the helpers inside your Node-RED node runtime file:
-
 ```js
 module.exports = function (RED) {
-    const { getTypedProperty, setTypedProperty, createStatus } =
-        require('@faigle/node-red-runtime-utils')(RED);
+    const { extendProperties, extendStatus } = require('@faigle/node-red-runtime-utils')(RED);
 
     function MyNode(config) {
         RED.nodes.createNode(this, config);
 
         const node = this;
-        const status = createStatus(node);
+
+        extendProperties(node, RED);
+        extendStatus(node);
 
         node.on('input', async function (msg, send, done) {
             try {
-                status.processing('working');
+                node.status.processing('working');
 
-                const value = await getTypedProperty(
+                const value = await node.getTypedProperty(
                     config.source,
                     config.sourceType || 'str',
-                    node,
                     msg,
                 );
 
-                await setTypedProperty(
-                    node,
+                await node.setTypedProperty(
                     msg,
                     config.target || 'payload',
                     config.targetType || 'msg',
                     value,
                 );
 
-                status.succeeded('done');
+                node.status.succeeded('done');
 
                 send(msg);
                 if (done) done();
             } catch (err) {
-                status.failed(err.message || 'failed');
+                node.status.failed(err.message || 'failed');
 
                 if (done) done(err);
                 else node.error(err, msg);
@@ -65,14 +64,29 @@ module.exports = function (RED) {
 };
 ```
 
-## Helpers
+## Property helpers
 
-### `getTypedProperty(value, type, node, msg)`
+### `extendProperties(node, RED)`
+
+Adds typed property helper methods to a Node-RED node instance.
+
+```js
+extendProperties(node, RED);
+```
+
+After extension, the node has:
+
+```js
+node.getTypedProperty(value, type, msg);
+node.setTypedProperty(msg, target, targetType, value);
+```
+
+### `node.getTypedProperty(value, type, msg)`
 
 Reads a value from a Node-RED typed input configuration.
 
 ```js
-const value = await getTypedProperty(config.source, config.sourceType, node, msg);
+const value = await node.getTypedProperty(config.source, config.sourceType || 'str', msg);
 ```
 
 Example editor setup:
@@ -85,7 +99,7 @@ $('#node-input-source').typedInput({
 });
 ```
 
-Example defaults:
+Example node defaults:
 
 ```js
 defaults: {
@@ -94,9 +108,7 @@ defaults: {
 }
 ```
 
----
-
-### `setTypedProperty(node, msg, target, targetType, value)`
+### `node.setTypedProperty(msg, target, targetType, value)`
 
 Writes a value to a configurable output target.
 
@@ -107,7 +119,7 @@ Supported target types:
 - `global`
 
 ```js
-await setTypedProperty(node, msg, config.target || 'payload', config.targetType || 'msg', value);
+await node.setTypedProperty(msg, config.target || 'payload', config.targetType || 'msg', value);
 ```
 
 Example editor setup:
@@ -120,7 +132,7 @@ $('#node-input-target').typedInput({
 });
 ```
 
-Example defaults:
+Example node defaults:
 
 ```js
 defaults: {
@@ -129,7 +141,7 @@ defaults: {
 }
 ```
 
-Example targets:
+Example `msg` targets:
 
 ```txt
 payload
@@ -139,28 +151,49 @@ result.value
 
 For `msg` targets, do not include the `msg.` prefix.
 
----
+Correct:
 
-### `createStatus(node)`
-
-Creates a small status helper for a Node-RED node instance.
-
-```js
-const status = createStatus(node);
+```txt
+payload
+file.data
 ```
 
-Available methods:
+Incorrect:
+
+```txt
+msg.payload
+msg.file.data
+```
+
+## Status helpers
+
+### `extendStatus(node)`
+
+Adds helper methods to the existing `node.status` function.
 
 ```js
-status.processing('working');
-status.succeeded('done');
-status.failed('failed');
-status.warning('warning');
-status.waiting('waiting');
-status.idle('idle');
-status.disabled('disabled');
-status.paused('paused');
-status.clear();
+extendStatus(node);
+```
+
+Raw Node-RED status calls still work:
+
+```js
+node.status({ fill: 'green', shape: 'dot', text: 'ready' });
+```
+
+After extension, the node also supports:
+
+```js
+node.status.processing('working');
+node.status.succeeded('done');
+node.status.failed('failed');
+node.status.warning('warning');
+node.status.info('info');
+node.status.waiting('waiting');
+node.status.idle('idle');
+node.status.disabled('disabled');
+node.status.paused('paused');
+node.status.clear();
 ```
 
 Default status behavior:
@@ -171,23 +204,69 @@ Default status behavior:
 | `succeeded()`  | green dot, clears after 10 seconds |
 | `failed()`     | red dot                            |
 | `warning()`    | yellow dot                         |
+| `info()`       | grey dot                           |
 | `waiting()`    | grey ring                          |
-| `idle()`       | grey dot                           |
+| `idle()`       | grey ring                          |
 | `disabled()`   | grey dot                           |
 | `paused()`     | yellow ring                        |
+| `clear()`      | clears the node status             |
 
-#### Success with custom duration
+### Success with custom duration
 
 ```js
-status.succeeded('done', {
+node.status.succeeded('done', {
     durationMs: 3000,
 });
 ```
 
-#### Success followed by another status
+### Success followed by another status
 
 ```js
-status.succeeded('done', {
-    next: () => status.waiting('waiting for input'),
+node.status.succeeded('done', {
+    next: () => node.status.waiting('waiting for input'),
 });
+```
+
+## Example with typed input and typed output
+
+```js
+module.exports = function (RED) {
+    const { extendProperties, extendStatus } = require('@faigle/node-red-runtime-utils')(RED);
+
+    function ExampleNode(config) {
+        RED.nodes.createNode(this, config);
+
+        const node = this;
+
+        extendProperties(node, RED);
+        extendStatus(node);
+
+        node.source = config.source;
+        node.sourceType = config.sourceType || 'str';
+        node.target = config.target || 'payload';
+        node.targetType = config.targetType || 'msg';
+
+        node.on('input', async function (msg, send, done) {
+            try {
+                node.status.processing('processing');
+
+                const value = await node.getTypedProperty(node.source, node.sourceType, msg);
+
+                await node.setTypedProperty(msg, node.target, node.targetType, value);
+
+                node.status.succeeded('done');
+
+                send(msg);
+                if (done) done();
+            } catch (err) {
+                node.status.failed(err.message || 'failed');
+
+                if (done) done(err);
+                else node.error(err, msg);
+            }
+        });
+    }
+
+    RED.nodes.registerType('example-node', ExampleNode);
+};
 ```

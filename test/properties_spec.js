@@ -1,5 +1,5 @@
 const assert = require('assert/strict');
-const createPropertyUtils = require('../src/lib/properties');
+const { extendProperties } = require('../src/lib/properties');
 
 describe('properties utils', function () {
     let RED, node, msg, flowStore, globalStore;
@@ -43,50 +43,86 @@ describe('properties utils', function () {
     });
 
     it('throws if RED is not provided', function () {
-        assert.throws(() => createPropertyUtils(), /requires the Node-RED runtime object/);
+        assert.throws(() => extendProperties(node), /requires the Node-RED runtime object/);
+    });
+
+    it('throws when extending an invalid node', function () {
+        assert.throws(() => extendProperties({}, RED), /requires a Node-RED node instance/);
+    });
+
+    it('extends a node with typed property helpers', function () {
+        const returned = extendProperties(node, RED);
+
+        assert.equal(returned, node);
+        assert.equal(typeof node.getTypedProperty, 'function');
+        assert.equal(typeof node.setTypedProperty, 'function');
+    });
+
+    it('does not replace existing extended property helpers', function () {
+        node.getTypedProperty = function () {};
+        node.setTypedProperty = function () {};
+
+        const getTypedProperty = node.getTypedProperty;
+        const setTypedProperty = node.setTypedProperty;
+
+        extendProperties(node, RED);
+
+        assert.equal(node.getTypedProperty, getTypedProperty);
+        assert.equal(node.setTypedProperty, setTypedProperty);
     });
 
     it('gets a typed property successfully', async function () {
-        const utils = createPropertyUtils(RED);
-        const res = await utils.getTypedProperty('test', 'str', node, msg);
+        extendProperties(node, RED);
+
+        const res = await node.getTypedProperty('test', 'str', msg);
+
         assert.equal(res, 'test-evaluated');
     });
 
     it('rejects when property evaluation fails', async function () {
-        const utils = createPropertyUtils(RED);
-        await assert.rejects(utils.getTypedProperty('error', 'str', node, msg), /eval error/);
+        extendProperties(node, RED);
+
+        await assert.rejects(node.getTypedProperty('error', 'str', msg), /eval error/);
     });
 
     it('sets a msg property', async function () {
-        const utils = createPropertyUtils(RED);
-        await utils.setTypedProperty(node, msg, 'payload', 'msg', 'data');
+        extendProperties(node, RED);
+
+        await node.setTypedProperty(msg, 'payload', 'msg', 'data');
+
         assert.equal(msg.payload, 'data');
     });
 
     it('sets a flow property', async function () {
-        const utils = createPropertyUtils(RED);
-        await utils.setTypedProperty(node, msg, 'testKey', 'flow', 'data');
-        assert.equal(flowStore.data['testKey'], 'data');
+        extendProperties(node, RED);
+
+        await node.setTypedProperty(msg, 'testKey', 'flow', 'data');
+
+        assert.equal(flowStore.data.testKey, 'data');
     });
 
     it('sets a global property', async function () {
-        const utils = createPropertyUtils(RED);
-        await utils.setTypedProperty(node, msg, 'testKey', 'global', 'data');
-        assert.equal(globalStore.data['testKey'], 'data');
+        extendProperties(node, RED);
+
+        await node.setTypedProperty(msg, 'testKey', 'global', 'data');
+
+        assert.equal(globalStore.data.testKey, 'data');
     });
 
     it('throws if target property is missing', function () {
-        const utils = createPropertyUtils(RED);
+        extendProperties(node, RED);
+
         assert.throws(
-            () => utils.setTypedProperty(node, msg, '', 'msg', 'data'),
+            () => node.setTypedProperty(msg, '', 'msg', 'data'),
             /Target property is missing/,
         );
     });
 
     it('throws if target type is unsupported', function () {
-        const utils = createPropertyUtils(RED);
+        extendProperties(node, RED);
+
         assert.throws(
-            () => utils.setTypedProperty(node, msg, 'test', 'invalid', 'data'),
+            () => node.setTypedProperty(msg, 'test', 'invalid', 'data'),
             /Unsupported target property type/,
         );
     });

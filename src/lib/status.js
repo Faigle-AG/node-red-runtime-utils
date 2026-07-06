@@ -2,7 +2,15 @@
 
 const DEFAULT_SUCCESS_DURATION_MS = 10_000;
 
-function createStatus(node) {
+function extendStatus(node) {
+    if (!node || typeof node.status !== 'function') {
+        throw new Error('extendStatus requires a Node-RED node instance');
+    }
+
+    if (node.status.succeeded) {
+        return node;
+    }
+
     let timer = null;
 
     function cancelTimer() {
@@ -17,12 +25,12 @@ function createStatus(node) {
         node.status({ fill, shape, text });
     }
 
-    function clear() {
+    node.status.clear = function () {
         cancelTimer();
         node.status({});
-    }
+    };
 
-    function succeeded(text, options = {}) {
+    node.status.succeeded = function (text, options = {}) {
         cancelTimer();
 
         node.status({
@@ -34,53 +42,46 @@ function createStatus(node) {
         timer = setTimeout(() => {
             timer = null;
 
-            if (options.next) {
-                options.next();
-            } else {
-                node.status({});
-            }
+            if (options.next && typeof options.next === 'function') options.next();
+            else node.status({});
         }, options.durationMs || DEFAULT_SUCCESS_DURATION_MS);
-    }
-
-    return {
-        succeeded,
-
-        failed(text) {
-            show('red', 'dot', text || 'failed');
-        },
-
-        warning(text) {
-            show('yellow', 'dot', text || 'warning');
-        },
-
-        info(text) {
-            show('grey', 'dot', text || 'info');
-        },
-
-        processing(text) {
-            show('blue', 'ring', text || 'processing');
-        },
-
-        waiting(text) {
-            show('grey', 'ring', text || 'waiting');
-        },
-
-        idle(text) {
-            show('grey', 'ring', text || 'idle');
-        },
-
-        disabled(text) {
-            show('grey', 'dot', text || 'disabled');
-        },
-
-        paused(text) {
-            show('yellow', 'ring', text || 'paused');
-        },
-
-        clear,
     };
+
+    node.status.failed = function (text) {
+        show('red', 'dot', text || 'failed');
+    };
+
+    node.status.warning = function (text) {
+        show('yellow', 'dot', text || 'warning');
+    };
+
+    node.status.info = function (text) {
+        show('grey', 'dot', text || 'info');
+    };
+
+    node.status.processing = function (text) {
+        show('blue', 'ring', text || 'processing');
+    };
+
+    node.status.waiting = function (text) {
+        show('grey', 'ring', text || 'waiting');
+    };
+
+    node.status.idle = function (text) {
+        show('grey', 'ring', text || 'idle');
+    };
+
+    node.status.disabled = function (text) {
+        show('grey', 'dot', text || 'disabled');
+    };
+
+    node.status.paused = function (text) {
+        show('yellow', 'ring', text || 'paused');
+    };
+
+    return node;
 }
 
 module.exports = {
-    createStatus,
+    extendStatus,
 };
