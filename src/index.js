@@ -1,8 +1,13 @@
 'use strict';
 
+const { extendProperties } = require('./lib/properties');
+const { extendStatus } = require('./lib/status');
+
 module.exports = function createRuntimeUtils(RED) {
     return {
-        ...require('./lib/properties')(RED),
-        ...require('./lib/status'),
+        extendProperties(node) {
+            return extendProperties(node, RED);
+        },
+        extendStatus,
     };
 };
