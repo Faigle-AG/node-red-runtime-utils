@@ -20,15 +20,14 @@ npm install @faigle/node-red-runtime-utils
 
 ```js
 module.exports = function (RED) {
-    const { extendProperties, extendStatus } = require('@faigle/node-red-runtime-utils')(RED);
+    const { extendNode } = require('@faigle/node-red-runtime-utils')(RED);
 
     function MyNode(config) {
         RED.nodes.createNode(this, config);
 
         const node = this;
 
-        extendProperties(node, RED);
-        extendStatus(node);
+        extendNode(node);
 
         node.on('input', async function (msg, send, done) {
             try {
@@ -66,12 +65,12 @@ module.exports = function (RED) {
 
 ## Property helpers
 
-### `extendProperties(node, RED)`
+### `extendProperties(node)`
 
 Adds typed property helper methods to a Node-RED node instance.
 
 ```js
-extendProperties(node, RED);
+extendProperties(node);
 ```
 
 After extension, the node has:
@@ -227,19 +226,22 @@ node.status.succeeded('done', {
 });
 ```
 
+## all helpers
+
+For simplification, the `extendNode(node)` funciton extends the node with all helpers.
+
 ## Example with typed input and typed output
 
 ```js
 module.exports = function (RED) {
-    const { extendProperties, extendStatus } = require('@faigle/node-red-runtime-utils')(RED);
+    const { extendNode } = require('@faigle/node-red-runtime-utils')(RED);
 
     function ExampleNode(config) {
         RED.nodes.createNode(this, config);
 
         const node = this;
 
-        extendProperties(node, RED);
-        extendStatus(node);
+        extendNode(node);
 
         node.source = config.source;
         node.sourceType = config.sourceType || 'str';
