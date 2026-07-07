@@ -11,7 +11,7 @@ module.exports = function createRuntimeUtils(RED) {
         extendStatus,
 
         extendNode(node) {
-            return extendStatus(extendProperties(node));
+            return extendStatus(extendProperties(node, RED));
         },
     };
 };
