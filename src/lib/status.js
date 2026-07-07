@@ -30,6 +30,12 @@ function extendStatus(node) {
         node.status({});
     };
 
+    if (typeof node.on === 'function') {
+        node.on('close', function () {
+            cancelTimer();
+        });
+    }
+
     node.status.succeeded = function (text, options = {}) {
         cancelTimer();
 
