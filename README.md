@@ -40,9 +40,9 @@ module.exports = function (RED) {
                 );
 
                 await node.setTypedProperty(
-                    msg,
                     config.target || 'payload',
                     config.targetType || 'msg',
+                    msg,
                     value,
                 );
 
@@ -77,7 +77,7 @@ After extension, the node has:
 
 ```js
 node.getTypedProperty(value, type, msg);
-node.setTypedProperty(msg, target, targetType, value);
+node.setTypedProperty(target, targetType, msg, value);
 ```
 
 ### `node.getTypedProperty(value, type, msg)`
@@ -107,7 +107,7 @@ defaults: {
 }
 ```
 
-### `node.setTypedProperty(msg, target, targetType, value)`
+### `node.setTypedProperty(target, targetType, msg, value)`
 
 Writes a value to a configurable output target.
 
@@ -118,7 +118,7 @@ Supported target types:
 - `global`
 
 ```js
-await node.setTypedProperty(msg, config.target || 'payload', config.targetType || 'msg', value);
+await node.setTypedProperty(config.target || 'payload', config.targetType || 'msg', msg, value);
 ```
 
 Example editor setup:
@@ -254,7 +254,7 @@ module.exports = function (RED) {
 
                 const value = await node.getTypedProperty(node.source, node.sourceType, msg);
 
-                await node.setTypedProperty(msg, node.target, node.targetType, value);
+                await node.setTypedProperty(node.target, node.targetType, msg, value);
 
                 node.status.succeeded('done');
 
