@@ -22,25 +22,38 @@ function extendProperties(node, RED) {
         });
     };
 
-    node.setTypedProperty = function (msg, target, targetType, value) {
-        if (!target || typeof target !== 'string') {
-            throw new Error('Target property is missing');
-        }
+    node.setTypedProperty = function (value, type, msg, data) {
+        return new Promise((resolve, reject) => {
+            try {
+                if (!value || typeof value !== 'string') {
+                    throw new Error('Target property is missing');
+                }
 
-        switch (targetType || 'msg') {
-            case 'msg':
-                RED.util.setMessageProperty(msg, target, value, true);
-                return Promise.resolve();
+                switch (type || 'msg') {
+                    case 'msg':
+                        RED.util.setMessageProperty(msg, value, data, true);
+                        resolve();
+                        break;
 
-            case 'flow':
-                return setContextValue(node.context().flow, target, value);
+                    case 'flow':
+                        setContextValue(node.context().flow, value, data)
+                            .then(resolve)
+                            .catch(reject);
+                        break;
 
-            case 'global':
-                return setContextValue(node.context().global, target, value);
+                    case 'global':
+                        setContextValue(node.context().global, value, data)
+                            .then(resolve)
+                            .catch(reject);
+                        break;
 
-            default:
-                throw new Error(`Unsupported target property type: ${targetType}`);
-        }
+                    default:
+                        throw new Error(`Unsupported target property type: ${type}`);
+                }
+            } catch (err) {
+                reject(err);
+            }
+        });
     };
 
     return node;

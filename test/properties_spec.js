@@ -88,7 +88,7 @@ describe('properties utils', function () {
     it('sets a msg property', async function () {
         extendProperties(node, RED);
 
-        await node.setTypedProperty(msg, 'payload', 'msg', 'data');
+        await node.setTypedProperty('payload', 'msg', msg, 'data');
 
         assert.equal(msg.payload, 'data');
     });
@@ -96,7 +96,7 @@ describe('properties utils', function () {
     it('sets a flow property', async function () {
         extendProperties(node, RED);
 
-        await node.setTypedProperty(msg, 'testKey', 'flow', 'data');
+        await node.setTypedProperty('testKey', 'flow', msg, 'data');
 
         assert.equal(flowStore.data.testKey, 'data');
     });
@@ -104,25 +104,25 @@ describe('properties utils', function () {
     it('sets a global property', async function () {
         extendProperties(node, RED);
 
-        await node.setTypedProperty(msg, 'testKey', 'global', 'data');
+        await node.setTypedProperty('testKey', 'global', msg, 'data');
 
         assert.equal(globalStore.data.testKey, 'data');
     });
 
-    it('throws if target property is missing', function () {
+    it('rejects if target property is missing', async function () {
         extendProperties(node, RED);
 
-        assert.throws(
-            () => node.setTypedProperty(msg, '', 'msg', 'data'),
+        await assert.rejects(
+            node.setTypedProperty('', 'msg', msg, 'data'),
             /Target property is missing/,
         );
     });
 
-    it('throws if target type is unsupported', function () {
+    it('rejects if target type is unsupported', async function () {
         extendProperties(node, RED);
 
-        assert.throws(
-            () => node.setTypedProperty(msg, 'test', 'invalid', 'data'),
+        await assert.rejects(
+            node.setTypedProperty('test', 'invalid', msg, 'data'),
             /Unsupported target property type/,
         );
     });
