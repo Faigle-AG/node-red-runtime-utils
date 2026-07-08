@@ -13,13 +13,13 @@ describe('status utils', function () {
         };
     });
 
-    it('extends node.status without replacing the original status function', function () {
+    it('extends node.status by shadowing the original prototype function to prevent leakage', function () {
         const originalStatus = node.status;
 
         const returned = extendStatus(node);
 
         assert.equal(returned, node);
-        assert.equal(node.status, originalStatus);
+        assert.notEqual(node.status, originalStatus);
         assert.equal(typeof node.status.processing, 'function');
         assert.equal(typeof node.status.succeeded, 'function');
         assert.equal(typeof node.status.failed, 'function');
@@ -145,5 +145,15 @@ describe('status utils', function () {
 
     it('throws when extending an invalid node', function () {
         assert.throws(() => extendStatus({}), /requires a Node-RED node instance/);
+    });
+
+    it('does not leak status helpers to other nodes', function () {
+        const nodeA = { status: function () {} };
+        const nodeB = { status: nodeA.status }; // Simulate shared prototype function
+
+        extendStatus(nodeA);
+
+        assert.equal(typeof nodeA.status.succeeded, 'function');
+        assert.equal(typeof nodeB.status.succeeded, 'undefined');
     });
 });

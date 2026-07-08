@@ -7,7 +7,7 @@ function extendStatus(node) {
         throw new Error('extendStatus requires a Node-RED node instance');
     }
 
-    if (node.status.succeeded) {
+    if (node.status.isExtended) {
         return node;
     }
 
@@ -19,6 +19,14 @@ function extendStatus(node) {
             timer = null;
         }
     }
+
+    const originalStatus = node.status;
+
+    node.status = function (statusObj) {
+        originalStatus.call(node, statusObj);
+    };
+
+    node.status.isExtended = true;
 
     function show(fill, shape, text) {
         cancelTimer();
