@@ -15,10 +15,15 @@ function extendProperties(node, RED) {
 
     node.getTypedProperty = function (value, type, msg) {
         return new Promise((resolve, reject) => {
-            RED.util.evaluateNodeProperty(value, type, node, msg, (err, result) => {
-                if (err) reject(err);
-                else resolve(result);
-            });
+            if (!value) return resolve('');
+            try {
+                RED.util.evaluateNodeProperty(value, type || 'msg', node, msg, (err, result) => {
+                    if (err) return reject(err);
+                    resolve(result !== undefined && result !== null ? result : '');
+                });
+            } catch (err) {
+                reject(err);
+            }
         });
     };
 

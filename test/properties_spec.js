@@ -126,4 +126,44 @@ describe('properties utils', function () {
             /Unsupported target property type/,
         );
     });
+
+    it('resolves immediately to an empty string without stalling when value is empty or undefined', async function () {
+        extendProperties(node, RED);
+        let evalCalled = false;
+        RED.util.evaluateNodeProperty = () => {
+            evalCalled = true;
+        };
+
+        const res1 = await node.getTypedProperty('', 'str', msg);
+        const res2 = await node.getTypedProperty(undefined, 'msg', msg);
+
+        assert.equal(res1, '');
+        assert.equal(res2, '');
+        assert.equal(evalCalled, false);
+    });
+
+    it('defaults to msg type and resolves without stalling when type is undefined', async function () {
+        extendProperties(node, RED);
+        let passedType = null;
+        RED.util.evaluateNodeProperty = (val, type, n, m, cb) => {
+            passedType = type;
+            cb(null, 'defaulted');
+        };
+
+        const res = await node.getTypedProperty('payload', undefined, msg);
+        assert.equal(res, 'defaulted');
+        assert.equal(passedType, 'msg');
+    });
+
+    it('rejects immediately without stalling when evaluateNodeProperty throws synchronously', async function () {
+        extendProperties(node, RED);
+        RED.util.evaluateNodeProperty = () => {
+            throw new Error('synchronous evaluation failure');
+        };
+
+        await assert.rejects(
+            node.getTypedProperty('explode', 'jsonata', msg),
+            /synchronous evaluation failure/,
+        );
+    });
 });
