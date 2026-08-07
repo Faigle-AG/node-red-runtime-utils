@@ -7,11 +7,15 @@ function extendStatus(node) {
         throw new Error('extendStatus requires a Node-RED node instance');
     }
 
-    if (node.status.isExtended) {
+    if (Object.prototype.hasOwnProperty.call(node, '_statusExtended')) {
         return node;
     }
 
+    node._statusExtended = true;
+
     let timer = null;
+
+    const originalStatus = node.status.bind(node);
 
     function cancelTimer() {
         if (timer) {
@@ -20,34 +24,26 @@ function extendStatus(node) {
         }
     }
 
-    const originalStatus = node.status;
+    function status(statusObj) {
+        return originalStatus(statusObj);
+    }
 
-    node.status = function (statusObj) {
-        originalStatus.call(node, statusObj);
-    };
-
-    node.status.isExtended = true;
+    node.status = status;
 
     function show(fill, shape, text) {
         cancelTimer();
-        node.status({ fill, shape, text });
+        originalStatus({ fill, shape, text });
     }
 
     node.status.clear = function () {
         cancelTimer();
-        node.status({});
+        originalStatus({});
     };
-
-    if (typeof node.on === 'function') {
-        node.on('close', function () {
-            cancelTimer();
-        });
-    }
 
     node.status.succeeded = function (text, options = {}) {
         cancelTimer();
 
-        node.status({
+        originalStatus({
             fill: 'green',
             shape: 'dot',
             text: text || 'succeeded',
@@ -56,8 +52,11 @@ function extendStatus(node) {
         timer = setTimeout(() => {
             timer = null;
 
-            if (options.next && typeof options.next === 'function') options.next();
-            else node.status({});
+            if (typeof options.next === 'function') {
+                options.next();
+            } else {
+                originalStatus({});
+            }
         }, options.durationMs || DEFAULT_SUCCESS_DURATION_MS);
     };
 
@@ -92,6 +91,10 @@ function extendStatus(node) {
     node.status.paused = function (text) {
         show('yellow', 'ring', text || 'paused');
     };
+
+    if (typeof node.on === 'function') {
+        node.on('close', cancelTimer);
+    }
 
     return node;
 }
