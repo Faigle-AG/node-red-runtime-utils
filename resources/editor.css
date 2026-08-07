@@ -11,7 +11,7 @@
 
 .faigle-node-editor .form-row:not(.flex-checkbox-row) {
     display: grid;
-    grid-template-columns: 104px minmax(0, 1fr);
+    grid-template-columns: 125px minmax(0, 1fr);
     align-items: center;
     column-gap: 0;
 }
