@@ -214,10 +214,6 @@
 
 /* ---------------------------------------------------------
  * Config node selectors
- *
- * Node-RED expands a config-node input into a resizable
- * selector plus edit/add controls. Keep the selector fluid
- * while the action buttons retain their natural width.
  * --------------------------------------------------------- */
 
 .faigle-node-editor .form-row.config-node-row {
@@ -245,6 +241,41 @@
 .faigle-node-editor .form-row.config-node-row > .red-ui-button,
 .faigle-node-editor .form-row.config-node-row > button,
 .faigle-node-editor .form-row.config-node-row > a {
+    flex: 0 0 auto;
+    margin: 0 !important;
+}
+
+/* ---------------------------------------------------------
+ * Input + action button rows
+ * --------------------------------------------------------- */
+
+.faigle-node-editor .form-row.input-button-row {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.faigle-node-editor .form-row.input-button-row > label {
+    flex: 0 0 125px;
+    width: 125px !important;
+    margin: 0 !important;
+}
+
+.faigle-node-editor .form-row.input-button-row
+    > input:not([type='hidden']),
+.faigle-node-editor .form-row.input-button-row > select,
+.faigle-node-editor .form-row.input-button-row > .red-ui-typedInput-container {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    box-sizing: border-box;
+}
+
+.faigle-node-editor .form-row.input-button-row > .red-ui-button,
+.faigle-node-editor .form-row.input-button-row > button,
+.faigle-node-editor .form-row.input-button-row > a {
     flex: 0 0 auto;
     margin: 0 !important;
 }
