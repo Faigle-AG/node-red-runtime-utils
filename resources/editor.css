@@ -197,3 +197,17 @@
 
     flex: 0 0 auto;
 }
+
+/* ---------------------------------------------------------
+ * Inline form help
+ * --------------------------------------------------------- */
+
+.faigle-node-editor .form-help-row {
+    margin-top: -4px;
+}
+
+.faigle-node-editor .form-help {
+    color: var(--red-ui-secondary-text-color, #777);
+    font-size: 12px;
+    line-height: 1.4;
+}
