@@ -211,3 +211,41 @@
     font-size: 12px;
     line-height: 1.4;
 }
+
+/* ---------------------------------------------------------
+ * Config node selectors
+ *
+ * Node-RED expands a config-node input into a resizable
+ * selector plus edit/add controls. Keep the selector fluid
+ * while the action buttons retain their natural width.
+ * --------------------------------------------------------- */
+
+.faigle-node-editor .form-row.config-node-row {
+    display: flex !important;
+    align-items: center;
+    gap: 10px;
+    min-width: 0;
+}
+
+.faigle-node-editor .form-row.config-node-row > label {
+    flex: 0 0 125px;
+    width: 125px !important;
+    margin: 0 !important;
+}
+
+.faigle-node-editor .form-row.config-node-row
+    > :not(label):not(.red-ui-button):not(button):not(a) {
+    flex: 1 1 0 !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-width: none !important;
+    box-sizing: border-box;
+}
+
+.faigle-node-editor .form-row.config-node-row > .red-ui-button,
+.faigle-node-editor .form-row.config-node-row > button,
+.faigle-node-editor .form-row.config-node-row > a {
+    flex: 0 0 auto;
+    margin: 0 !important;
+}
+
