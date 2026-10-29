@@ -1,6 +1,6 @@
 {
   "name": "@faigle/node-red-runtime-utils",
-  "version": "0.6.7",
+  "version": "0.6.8",
   "description": "Helpers for building Node-RED nodes",
   "main": "src/index.js",
   "private": false,
@@ -29,13 +29,15 @@
     "lint-staged": "^17.0.8",
     "mocha": "^11.7.6",
     "node-red": "^5.0.1",
-    "prettier": "^3.9.4"
+    "prettier": "^3.9.4",
+    "node-red-node-test-helper": "^0.3.6"
   },
   "scripts": {
-    "prepare": "husky",
+    "prepare": "npx --yes husky",
     "test": "mocha \"test/**/*_spec.js\"",
     "format": "prettier --write \"**/*.{js,html,md}\"",
-    "lint": "eslint \"**/*.{js,html}\""
+    "lint": "eslint \"**/*.{js,html}\"",
+    "format:check": "prettier --check \"**/*.{js,html,md}\""
   },
   "lint-staged": {
     "*.{js,html,md}": "prettier --write",
